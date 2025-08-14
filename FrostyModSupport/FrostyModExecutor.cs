@@ -19,6 +19,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FrostySdk.Managers.Entries;
 using System.Media;
+using System.IO.Compression;
 
 namespace Frosty.ModSupport
 {
@@ -2213,6 +2214,79 @@ namespace Frosty.ModSupport
                     else
                     {
                         CopyFileIfRequired(Path.Combine(m_fs.BasePath, "Data", "initfs_Win32"), Path.Combine(modDataPath, "Data", "initfs_Win32"), false);
+                    }
+                }
+
+                // Process DEX Mods
+                List<string> dexMods = new List<string>();
+                int dexCount = 0;
+
+                foreach (FrostyMod mod in modList)
+                {
+                    if (mod.NewFormat)
+                    {
+                        string modPath = Path.Combine(modDataPath, m_patchPath, "DAVExtender");
+                        DirectoryInfo modDir = new DirectoryInfo(modPath);
+
+                        Parallel.ForEach(mod.Resources, resource =>
+                        {
+                            if (resource.Type == ModResourceType.Embedded)
+                            {
+                                if (resource.Name == "DexResource" && resource != null)
+                                {
+                                    dexCount++;
+
+                                    dexMods.Add(mod.Filename);
+
+                                    if (!Directory.Exists(modPath))
+                                    {
+                                        Directory.CreateDirectory(modPath);
+                                    }
+
+                                    string modFolder = mod.Filename;
+                                    Directory.CreateDirectory(Path.Combine(modPath, modFolder));
+
+                                    byte[] dexResource = mod.GetResourceData(resource);
+
+                                    Stream data = new MemoryStream(dexResource);
+
+                                    ZipArchive archive = new ZipArchive(data);
+
+                                    foreach (ZipArchiveEntry entry in archive.Entries)
+                                    {
+                                        if (!entry.FullName.EndsWith("/"))
+                                        {
+                                            string splitName = entry.FullName.Split('/').Last();
+
+                                            entry.ExtractToFile(Path.Combine(modDir.FullName, modFolder, splitName));
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        if (Directory.Exists(modPath))
+                        {
+                            string[] dexModsDirs = Directory.GetDirectories(modPath);
+
+                            foreach (var dexMod in dexModsDirs)
+                            {
+                                DirectoryInfo dexModDir = new DirectoryInfo(dexMod);
+
+                                if (!dexMods.Contains(Path.GetFileName(dexMod)))
+                                {
+                                    dexModDir.Delete(true);
+                                }
+                            }
+                        }
+
+                        if (dexCount == 0)
+                        {
+                            if (Directory.Exists(modPath))
+                            {
+                                modDir.Delete(true);
+                            }
+                        }
                     }
                 }
 

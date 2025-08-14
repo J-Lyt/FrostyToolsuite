@@ -34,6 +34,9 @@ using System.Linq;
 using System.Media;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using DEXManifest;
+using Newtonsoft.Json.Linq;
+using SharpSevenZip;
 
 namespace FrostyModManager
 {
@@ -479,6 +482,16 @@ namespace FrostyModManager
             {
             }
 
+            if (File.Exists($"{Frosty.Core.App.FileSystemManager.BasePath}d3d11.dll") && ProfilesLibrary.IsLoaded(ProfileVersion.DragonAgeTheVeilguard))
+            {
+                DEXManifestJSON();
+
+                tabDEX.Visibility = Visibility.Visible;
+                dexHeader.Visibility = Visibility.Visible;
+                dexInstall.Header = "Installed";
+                dexInstall.IsEnabled = false;
+            }
+
             LoadedPluginsList.ItemsSource = App.PluginManager.LoadedPlugins;
 
             if (Config.Get("ApplyModOrder", "List") == "List")
@@ -525,6 +538,167 @@ namespace FrostyModManager
             }
 
             GC.Collect();
+        }
+
+        //public List<ActiveMod> refActiveMods;
+
+        private void DEXManifestJSON()
+        {
+            //string jsonFilePath = $"{Frosty.Core.App.FileSystemManager.BasePath}mods\\dave_manifest.json";
+
+            //if (!File.Exists(jsonFilePath))
+            //{
+            //    FileStream fs = new FileStream(jsonFilePath, FileMode.Create);
+            //    fs.Flush(true);
+            //    fs.Close();
+            //}
+
+            //string jsonString = File.ReadAllText(jsonFilePath);
+
+            //if (String.IsNullOrEmpty(jsonString))
+            //{
+            //    jsonString = "{\"active_mods\":[]}";
+            //}
+
+            string jsonString = "{\"active_mods\":[]}";
+
+            Manifest jsonFile = Manifest.FromJson(jsonString);
+
+            jsonFile.ActiveMods.Clear();
+
+            //string[] modFolders = Directory.GetDirectories($"{Frosty.Core.App.FileSystemManager.BasePath}mods").Select(Path.GetFileName).ToArray();
+            string selectedPackName = Config.Get<string>("SelectedPack", "", ConfigScope.Game);
+            string modPath = $"{Frosty.Core.App.FileSystemManager.BasePath}ModData\\{selectedPackName}\\Data\\DAVExtender";
+
+            if (Directory.Exists(modPath))
+            {
+                string[] modDir = Directory.GetDirectories(modPath);
+
+                foreach (var mod in modDir)
+                {
+                    string modJSONPath = $"{mod}\\dex.json";
+
+                    if (File.Exists(modJSONPath))
+                    {
+                        string modJSONString = File.ReadAllText(modJSONPath);
+                        ActiveMod modJSON = ManifestActiveMod.FromJson(modJSONString);
+
+                        jsonFile.ActiveMods.Add(modJSON);
+                    }
+                }
+            }
+            else
+            {
+                jsonFile.ActiveMods.Clear();
+            }
+
+            //jsonString = JsonConvert.SerializeObject(jsonFile, Formatting.Indented);
+            //File.WriteAllText(jsonFilePath, jsonString);
+
+            //refActiveMods = jsonFile.ActiveMods;
+            LoadedDEXMods.ItemsSource = jsonFile.ActiveMods;
+        }
+
+        private void installDEXModButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog ofd = new OpenFileDialog
+            {
+                Filter = "(All supported formats)|*.rar;*.zip;*.7z" + "|*.rar (Rar File)|*.rar" + "|*.zip (Zip File)|*.zip" + "|*.7z (7z File)|*.7z",
+                Title = "Install DAVExtender(Dex) Mod",
+            };
+
+            if (ofd.ShowDialog() == true)
+            {
+                string modPath = $"{Frosty.Core.App.FileSystemManager.BasePath}mods";
+                string modFolder = Path.GetFileNameWithoutExtension(ofd.FileName);
+
+                //Directory.CreateDirectory(Path.Combine(modPath, modFolder));
+                DirectoryInfo modDir = new DirectoryInfo(modPath);
+
+                IDecompressor decompressor = null;
+                if (ofd.FileName.EndsWith(".rar")) decompressor = new RarDecompressor();
+                else if (ofd.FileName.EndsWith(".zip")) decompressor = new ZipDecompressor();
+                else if (ofd.FileName.EndsWith(".7z")) decompressor = new SevenZipDecompressor();
+
+                decompressor.OpenArchive(ofd.FileName);
+
+                foreach (CompressedFileInfo compressedFi in decompressor.EnumerateFiles())
+                {
+                    //if (compressedFi.DirectoryName == "")
+                    //{
+                    //    Directory.CreateDirectory(Path.Combine(modPath, modFolder));
+                    //    break;
+                    //}
+                    //else
+                    //{
+                    //    Directory.CreateDirectory(Path.Combine(modPath, compressedFi.DirectoryName));
+                    //    modFolder = compressedFi.DirectoryName;
+                    //    break;
+                    //}
+
+                    if (compressedFi.Filename == "dex.json")
+                    {
+                        using (StreamReader reader = new StreamReader(compressedFi.Stream))
+                        {
+                            string modJSONRaw = reader.ReadToEnd();
+                            ActiveMod modJson = ManifestActiveMod.FromJson(modJSONRaw);
+
+                            if (Directory.Exists(Path.Combine(modPath, modJson.Slug)))
+                            {
+                                FrostyMessageBox.Show($"{modJson.Slug} already exists.", "Frosty Mod Manager");
+
+                                decompressor.CloseArchive();
+                                return;
+                            }
+
+                            Directory.CreateDirectory(Path.Combine(modPath, modJson.Slug));
+                            modFolder = modJson.Slug;
+                        }
+                        break;
+                    }
+
+                }
+
+                foreach (CompressedFileInfo compressedFi in decompressor.EnumerateFiles())
+                {
+                    if (compressedFi.Extension != "")
+                    {
+                        decompressor.DecompressToFile(compressedFi, Path.Combine(modDir.FullName, modFolder, compressedFi.Filename));
+                    }
+                }
+                decompressor.CloseArchive();
+
+                DEXManifestJSON();
+            }
+        }
+
+        private void uninstallDEXModButton_Click(object sender, RoutedEventArgs e)
+        {
+            //string modPath = $"{Frosty.Core.App.FileSystemManager.BasePath}mods";
+            //int selectedIndex = LoadedDEXMods.SelectedIndex;
+
+            //foreach (var mod in refActiveMods)
+            //{
+            //    int modIndex = refActiveMods.IndexOf(mod);
+
+            //    if (selectedIndex == modIndex)
+            //    {
+            //        Directory.Delete(Path.Combine(modPath, mod.Slug), true);
+            //        break;
+            //    }
+            //}
+
+            //DEXManifestJSON();
+        }
+
+        private void refreshDEXModsButton_Click(object sender, RoutedEventArgs e)
+        {
+            //DEXManifestJSON();
+        }
+
+        private void LoadedDEXMods_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            //uninstallDEXModButton.IsEnabled = true;
         }
 
         private void addProfileButton_Click(object sender, RoutedEventArgs e)
@@ -777,6 +951,8 @@ namespace FrostyModManager
                 }
 
             }, showCancelButton: true, cancelCallback: (task) => cancelToken.Cancel());
+
+            DEXManifestJSON();
 
             if (retCode != -1)
                 WindowState = WindowState.Minimized;
@@ -1619,6 +1795,31 @@ namespace FrostyModManager
         {
             ManageModDataWindow win = new ManageModDataWindow();
             win.ShowDialog();
+        }
+
+        private void dexInstall_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                Process.Start("https://www.nexusmods.com/dragonagetheveilguard/mods/2315");
+            }
+            catch { }
+        }
+
+        private void dexMods_Click(object sender, RoutedEventArgs e)
+        {
+            //string modsPath = $"{Frosty.Core.App.FileSystemManager.BasePath}mods";
+            string selectedPackName = Config.Get<string>("SelectedPack", "", ConfigScope.Game);
+            string modsPath = $"{Frosty.Core.App.FileSystemManager.BasePath}ModData\\{selectedPackName}\\Data\\DAVExtender";
+
+            try
+            {
+                Process.Start(modsPath);
+            }
+            catch
+            {
+                FrostyMessageBox.Show($"{modsPath} could not be found.", "Frosty Mod Manager", MessageBoxButton.OK);
+            }
         }
 
         private void openSettingsModManager_Click(object sender, RoutedEventArgs e)
