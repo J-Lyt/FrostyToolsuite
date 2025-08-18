@@ -2223,45 +2223,32 @@ namespace Frosty.ModSupport
 
                 foreach (FrostyMod mod in modList)
                 {
-                    if (mod.NewFormat)
+                    if (mod.NewFormat && mod.ModDetails.HasDexResource)
                     {
                         string modPath = Path.Combine(modDataPath, m_patchPath, "DAVExtender");
                         DirectoryInfo modDir = new DirectoryInfo(modPath);
 
                         Parallel.ForEach(mod.Resources, resource =>
                         {
-                            if (resource.Type == ModResourceType.Embedded)
+                            if (resource.Type == ModResourceType.Embedded && resource.Name == "DexResource")
                             {
-                                if (resource.Name == "DexResource" && resource != null)
+                                dexCount++;
+
+                                dexMods.Add(mod.Filename);
+
+                                if (!Directory.Exists(modPath))
                                 {
-                                    dexCount++;
-
-                                    dexMods.Add(mod.Filename);
-
-                                    if (!Directory.Exists(modPath))
-                                    {
-                                        Directory.CreateDirectory(modPath);
-                                    }
-
-                                    string modFolder = mod.Filename;
-                                    Directory.CreateDirectory(Path.Combine(modPath, modFolder));
-
-                                    byte[] dexResource = mod.GetResourceData(resource);
-
-                                    Stream data = new MemoryStream(dexResource);
-
-                                    ZipArchive archive = new ZipArchive(data);
-
-                                    foreach (ZipArchiveEntry entry in archive.Entries)
-                                    {
-                                        if (!entry.FullName.EndsWith("/"))
-                                        {
-                                            string splitName = entry.FullName.Split('/').Last();
-
-                                            entry.ExtractToFile(Path.Combine(modDir.FullName, modFolder, splitName));
-                                        }
-                                    }
+                                    Directory.CreateDirectory(modPath);
                                 }
+
+                                Directory.CreateDirectory(Path.Combine(modPath, mod.Filename));
+
+                                byte[] dexResource = mod.GetResourceData(resource);
+
+                                Stream data = new MemoryStream(dexResource);
+
+                                ZipArchive archive = new ZipArchive(data);
+                                archive.ExtractToDirectory(Path.Combine(modPath, mod.Filename));
                             }
                         });
 
@@ -2278,11 +2265,8 @@ namespace Frosty.ModSupport
                                     dexModDir.Delete(true);
                                 }
                             }
-                        }
 
-                        if (dexCount == 0)
-                        {
-                            if (Directory.Exists(modPath))
+                            if (dexCount == 0)
                             {
                                 modDir.Delete(true);
                             }

@@ -96,14 +96,14 @@ namespace FrostyEditor.Windows
                 using (NativeReader reader = new NativeReader(new FileStream(ofd.FileName, FileMode.Open, FileAccess.Read)))
                     buffer = reader.ReadToEnd();
 
-                if (buffer.Length > (16 * 1024 * 1024))
+                if (buffer.Length > (32 * 1024 * 1024))
                 {
-                    FrostyMessageBox.Show("DEX Archive cannot be larger than 16 MB", "Frosty Editor");
+                    FrostyMessageBox.Show("DEX Archive cannot be larger than 32 MB", "Frosty Editor");
                     dexButtonEnabled();
                     return;
                 }
 
-                if (parseZip(buffer, "dex.json", ".lua", ofd.SafeFileName) == true)
+                if (parseZip(buffer, "dex.json", ofd.SafeFileName))
                 {
                     modDEXResourceNameTextBox.Text = ofd.SafeFileName;
                     dexResource = buffer;
@@ -127,25 +127,15 @@ namespace FrostyEditor.Windows
             }
         }
 
-        private bool parseZip(byte[] buffer, string filename, string extension, string archiveName)
+        private bool parseZip(byte[] buffer, string filename, string archiveName)
         {
             Stream data = new MemoryStream(buffer);
 
             ZipArchive archive = new ZipArchive(data);
 
-            if (!archive.Entries.Any(x => x.FullName == filename) && !archive.Entries.Any(x => Path.GetExtension(x.FullName) == extension))
+            if (archive.GetEntry(filename) == null)
             {
-                FrostyMessageBox.Show($"{filename} and {extension} script(s) are missing from {archiveName}", "Frosty Editor");
-                return false;
-            }
-            else if (!archive.Entries.Any(x => x.FullName == filename) && archive.Entries.Any(x => Path.GetExtension(x.FullName) == extension))
-            {
-                FrostyMessageBox.Show($"{filename} is missing from {archiveName}", "Frosty Editor");
-                return false;
-            }
-            else if (archive.Entries.Any(x => x.FullName == filename) && !archive.Entries.Any(x => Path.GetExtension(x.FullName) == extension))
-            {
-                FrostyMessageBox.Show($"{extension} script(s) are missing from {archiveName}", "Frosty Editor");
+                FrostyMessageBox.Show($"{filename} cannot be found in {archiveName}. It is either missing or stored within a folder.\n\nAll files and folders must be at the root of the archive.", "Frosty Editor");
                 return false;
             }
 
@@ -166,7 +156,6 @@ namespace FrostyEditor.Windows
             {
                 File.WriteAllBytes(sfd.FileName, dexResource);
             }
-
         }
 
         private void clearDEXButton_Click(object sender, System.Windows.RoutedEventArgs e)

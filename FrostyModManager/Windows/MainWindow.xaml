@@ -621,54 +621,10 @@
                             <ctrl:FrostyTabItem x:Name="tabDEX" Header="DAVExtender(Dex) Mods" Visibility="Collapsed">
                                 <Grid>
                                     <Grid.RowDefinitions>
-                                        <!--<RowDefinition Height="26"/>-->
                                         <RowDefinition Height="*"/>
                                     </Grid.RowDefinitions>
 
-                                    <!-- Add/Remove/Refresh Mods -->
-                                    <!--<Border Grid.Row="0" BorderBrush="{StaticResource ControlBackground}" BorderThickness="0,0,0,2">
-                                        <DockPanel Margin="1">
-                                            --><!-- Add/Remove/Refresh List --><!--
-                                            <Border Background="{StaticResource ControlBackground}" DockPanel.Dock="Left" RenderOptions.EdgeMode="Aliased">
-                                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal" Margin="6,0,6,0">
-                                                     --><!-- Install Mod Button --><!--
-                                                    <Button x:Name="installDEXModButton" Height="20" IsEnabled="True" ToolTip="Import mod(s) from file" Click="installDEXModButton_Click">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Image Source="/FrostyModManager;component/Images/AddMod.png" Margin="0,0,2,0"/>
-                                                            <TextBlock Margin="2,0,3,2" Text="Add Mod(s)" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                     --><!-- Uninstall Mod Button --><!--
-                                                    <Button x:Name="uninstallDEXModButton" Height="20" Click="uninstallDEXModButton_Click" IsEnabled="False" ToolTip="Remove selected mod(s)" Margin="4,0,0,0">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            <Image Source="/FrostyModManager;component/Images/RemoveMod.png" Margin="0,0,2,0"/>
-                                                            <TextBlock Text="Remove Mod(s)" Margin="2,0,3,2" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Border>
-                                            --><!-- Refresh List --><!--
-                                            <Border Background="{StaticResource ControlBackground}" DockPanel.Dock="Right" RenderOptions.EdgeMode="Aliased">
-                                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal" Margin="6,0,6,0">
-                                                    --><!-- Refresh List Button --><!--
-                                                    <Button x:Name="refreshDEXMods" Height="20" Click="refreshDEXModsButton_Click" ToolTip="Refresh List">
-                                                        <StackPanel Orientation="Horizontal">
-                                                            --><!--<Image Source="/FrostyModManager;component/Images/Plus.png" Margin="0,0,4,0">
-                                                                <Image.RenderTransform>
-                                                                    <RotateTransform Angle="90" CenterX="10" CenterY="10"/>
-                                                                </Image.RenderTransform>
-                                                            </Image>--><!--
-                                                            <TextBlock Text="Refresh Mod(s)" Margin="2,0,3,2" VerticalAlignment="Center"/>
-                                                        </StackPanel>
-                                                    </Button>
-                                                </StackPanel>
-                                            </Border>
-                                            --><!-- Filler --><!--
-                                            <Border Background="Transparent" Margin="1,0,0,0" HorizontalAlignment="Stretch" DockPanel.Dock="Left"/>
-                                        </DockPanel>
-                                    </Border>-->
-
-                                    <ListView x:Name="LoadedDEXMods" Grid.Row="1" SelectionChanged="LoadedDEXMods_SelectionChanged">
+                                    <ListView x:Name="LoadedDEXMods" Grid.Row="1">
                                         <ListView.View>
                                             <ctrl:FrostyAutoSizedGridView>
                                                 <GridView.Columns>
