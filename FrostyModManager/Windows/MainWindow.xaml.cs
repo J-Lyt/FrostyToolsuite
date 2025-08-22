@@ -484,7 +484,7 @@ namespace FrostyModManager
 
             if (File.Exists($"{fs.BasePath}d3d11.dll") || File.Exists($"{fs.BasePath}DAVE.asi") && ProfilesLibrary.IsLoaded(ProfileVersion.DragonAgeTheVeilguard))
             {
-                DEXManifestJSON();
+                RefreshDexMods();
 
                 tabDEX.Visibility = Visibility.Visible;
                 dexHeader.Visibility = Visibility.Visible;
@@ -549,13 +549,9 @@ namespace FrostyModManager
             GC.Collect();
         }
 
-        private void DEXManifestJSON()
+        private void RefreshDexMods()
         {
-            string jsonString = "{\"active_mods\":[]}";
-
-            Manifest jsonFile = Manifest.FromJson(jsonString);
-
-            jsonFile.ActiveMods.Clear();
+            var activeMods = new List<ActiveMod>();
 
             string selectedPackName = Config.Get<string>("SelectedPack", "", ConfigScope.Game);
             string modPath = $"{fs.BasePath}ModData\\{selectedPackName}\\Data\\DAVExtender";
@@ -573,16 +569,12 @@ namespace FrostyModManager
                         string modJSONString = File.ReadAllText(modJSONPath);
                         ActiveMod modJSON = ManifestActiveMod.FromJson(modJSONString);
 
-                        jsonFile.ActiveMods.Add(modJSON);
+                        activeMods.Add(modJSON);
                     }
                 }
             }
-            else
-            {
-                jsonFile.ActiveMods.Clear();
-            }
 
-            LoadedDEXMods.ItemsSource = jsonFile.ActiveMods;
+            LoadedDEXMods.ItemsSource = activeMods;
         }
 
         private void addProfileButton_Click(object sender, RoutedEventArgs e)
@@ -836,7 +828,7 @@ namespace FrostyModManager
 
             }, showCancelButton: true, cancelCallback: (task) => cancelToken.Cancel());
 
-            DEXManifestJSON();
+            RefreshDexMods();
 
             if (retCode != -1)
                 WindowState = WindowState.Minimized;
