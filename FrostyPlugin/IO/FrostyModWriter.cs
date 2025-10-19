@@ -121,6 +121,8 @@ namespace Frosty.Core.IO
                         flags |= EbxWriteFlags.DoNotSort;
                     }
 
+                    Stream stream = App.AssetManager.GetEbxStream(entry, true);
+                    
                     using (EbxBaseWriter ebxWriter = EbxBaseWriter.CreateWriter(new MemoryStream(), flags))
                     {
                         // Prioritize imported bin data over everything for ebx
@@ -131,7 +133,7 @@ namespace Frosty.Core.IO
                         } 
                         else
                         {
-                            ebxWriter.WriteAsset(entry.ModifiedEntry.DataObject as EbxAsset);
+                            ebxWriter.WriteAsset(entry.ModifiedEntry.DataObject as EbxAsset, stream);
                             size = ebxWriter.Length;
                             data = Utils.CompressFile(ebxWriter.ToByteArray(), compressionOverride: compressType);
                         }
