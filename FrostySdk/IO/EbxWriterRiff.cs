@@ -241,8 +241,8 @@ namespace FrostySdk.IO
                     {
                         writer.Write(arr.Offset);
                         writer.Write(arr.Count);
-                        writer.Write(0x00); // unknown, varies between assets
-                        writer.Write((ushort)arr.Type);
+                        writer.Write(arr.Hash);
+                        writer.Write(arr.Type);
                         writer.Write((short)arr.ClassRef);
                     }
 
@@ -251,7 +251,7 @@ namespace FrostySdk.IO
                     {
                         writer.Write(val.Offset);
                         writer.Write(1);
-                        writer.Write(0x00); // unknown, varies between assets
+                        writer.Write(val.Hash);
                         writer.Write(val.Type);
                         writer.Write((short)val.ClassRef);
                     }
