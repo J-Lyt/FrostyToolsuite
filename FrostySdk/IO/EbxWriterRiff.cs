@@ -244,30 +244,42 @@ namespace FrostySdk.IO
                     writer.Write(m_arrays.Count);
                     writer.Write(m_boxedValues.Count);
 
-                    int count = 0;
                     m_arrays.Sort((EbxArray a, EbxArray b) => a.Offset.CompareTo(b.Offset));
-                    foreach (EbxArray arr in m_arrays)
+                    for (int i = 0; i < m_arrays.Count; i++)
                     {
-                        writer.Write(arr.Offset);
-                        writer.Write(arr.Count);
-                        writer.Write(m_arrayHashes[count]);
-                        writer.Write(arr.Type);
-                        writer.Write((short)arr.ClassRef);
+                        writer.Write(m_arrays[i].Offset);
+                        writer.Write(m_arrays[i].Count);
                         
-                        count++;
+                        if (m_arrayHashes.Count == m_arrays.Count)
+                        {
+                            writer.Write(m_arrayHashes[i]);
+                        }
+                        else
+                        {
+                            writer.Write(0x00);
+                        }
+
+                        writer.Write(m_arrays[i].Type);
+                        writer.Write((short)m_arrays[i].ClassRef);
                     }
 
-                    count = 0;
                     m_boxedValues.Sort((EbxBoxedValue a, EbxBoxedValue b) => a.Offset.CompareTo(b.Offset));
-                    foreach (EbxBoxedValue val in m_boxedValues)
+                    for (int i = 0; i < m_boxedValues.Count; i++)
                     {
-                        writer.Write(val.Offset);
+                        writer.Write(m_boxedValues[i].Offset);
                         writer.Write(1);
-                        writer.Write(m_boxedValuesHashes[count]);
-                        writer.Write(val.Type);
-                        writer.Write((short)val.ClassRef);
                         
-                        count++;
+                        if (m_boxedValuesHashes.Count == m_boxedValues.Count)
+                        {
+                            writer.Write(m_boxedValuesHashes[i]);
+                        }
+                        else
+                        {
+                            writer.Write(0x00);
+                        }
+
+                        writer.Write(m_boxedValues[i].Type);
+                        writer.Write((short)m_boxedValues[i].ClassRef);
                     }
 
                     ebxxSize = (uint)(writer.Position - 8);
